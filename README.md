@@ -1,8 +1,39 @@
 # RoxMate
 
-> HYROX × Monad 的个人运动身份与搭档匹配 MVP。
+> **YOUR OWN RECORD. YOUR NEXT PARTNER.**
 
-RoxMate 把个人比赛成绩、运动身份和真实搭档关系连接起来：用户连接钱包后，以钱包地址作为运动身份，创建公开身份卡，记录每场个人成绩，通过同城与表现数据寻找搭档，建立关系后互相评价。
+RoxMate 是一个面向 HYROX 社区的链上运动身份与搭档匹配 MVP。它把每一场比赛成绩沉淀为可验证的个人履历，再用同城、组别和真实表现帮助运动者找到更合拍的搭档。
+
+用户连接钱包后，以钱包地址作为运动身份，创建公开身份卡，记录个人成绩，浏览匹配候选人，并在完成搭档关系后留下 GOOD / BAD 评价。公开业务事实写入 Monad Testnet，未发布的成绩草稿仅保存在本地浏览器。
+
+| 在线体验 | 网络 | 合约 |
+| --- | --- | --- |
+| [roxmate-one.vercel.app](https://roxmate-one.vercel.app/) | Monad Testnet · Chain ID `10143` | `0x601c5e9007e52950575b46b84415b152853685d0` |
+
+## 产品截图
+
+以下截图展示 RoxMate 的核心使用路径：查看运动身份、录入比赛成绩、寻找匹配搭档，以及在移动端查看搭档评价。
+
+<table>
+  <tr>
+    <td width="50%"><img src="qa/2026-09-04/desktop-identity.png" alt="RoxMate 运动身份卡" /></td>
+    <td width="50%"><img src="qa/2026-09-04/desktop-record.png" alt="RoxMate 比赛成绩录入" /></td>
+  </tr>
+  <tr>
+    <td align="center">运动身份卡 · Personal Records</td>
+    <td align="center">比赛成绩录入 · Log Result</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="qa/2026-09-04/mobile-matches.png" alt="RoxMate 移动端找搭子" /></td>
+    <td width="50%"><img src="qa/personal-workflow/partner-review-mobile.jpg" alt="RoxMate 移动端搭档评价" /></td>
+  </tr>
+  <tr>
+    <td align="center">找搭子 · Find Mate</td>
+    <td align="center">搭档评价 · Partner Review</td>
+  </tr>
+</table>
+
+> 截图来自项目验收素材；线上首页可直接访问，钱包连接和链上写入操作需要使用 Monad Testnet 钱包并由用户确认交易。
 
 ## 功能特性
 
