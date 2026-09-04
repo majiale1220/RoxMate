@@ -34,16 +34,16 @@ HYROX 的成绩不只是一个最终用时。搭档是否合拍，还取决于�
 
 <table>
   <tr>
-    <td width="50%"><img src="qa/2026-09-04/desktop-identity.png" alt="RoxMate 运动身份卡" /></td>
-    <td width="50%"><img src="qa/2026-09-04/desktop-record.png" alt="RoxMate 比赛成绩录入" /></td>
+    <td width="50%"><img src="docs/screenshots/identity-desktop.png" alt="RoxMate 运动身份卡" /></td>
+    <td width="50%"><img src="docs/screenshots/record-desktop.png" alt="RoxMate 比赛成绩录入" /></td>
   </tr>
   <tr>
     <td align="center">运动身份卡 · Personal Records</td>
     <td align="center">比赛成绩录入 · Log Result</td>
   </tr>
   <tr>
-    <td width="50%"><img src="qa/2026-09-04/mobile-matches.png" alt="RoxMate 移动端找搭子" /></td>
-    <td width="50%"><img src="qa/personal-workflow/partner-review-mobile.jpg" alt="RoxMate 移动端搭档评价" /></td>
+    <td width="50%"><img src="docs/screenshots/matches-mobile.png" alt="RoxMate 移动端找搭子" /></td>
+    <td width="50%"><img src="docs/screenshots/partner-review-mobile.jpg" alt="RoxMate 移动端搭档评价" /></td>
   </tr>
   <tr>
     <td align="center">找搭子 · Find Mate</td>
