@@ -1,0 +1,14 @@
+{
+  "network": "Monad Testnet",
+  "chainId": 10143,
+  "rpcUrl": "https://testnet-rpc.monad.xyz/",
+  "contract": "RoxMateRegistry",
+  "address": "0x601c5e9007e52950575b46b84415b152853685d0",
+  "deployer": "0xfadB2e92e78A003a96318a6BD93AC0ad7eb5f97A",
+  "transactionHash": "0x117a6721f8c0dfa6d92af0b0c2b7f719db36293e1c7a5ae9e46a462780765b42",
+  "deploymentBlock": 59549608,
+  "gasUsed": "4825100",
+  "feeMON": "0.4969853000048251",
+  "receiptStatus": "success",
+  "sourceVerified": false
+}
