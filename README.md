@@ -11,6 +11,17 @@ RoxMate 把分散的比赛成绩变成可携带、可验证的运动身份，并
   Monad Testnet · Chain ID <code>10143</code>
 </p>
 
+## Hackathon Track
+
+| 参赛方向 | 项目信息 |
+| --- | --- |
+| 赛道 | **社会、注意力和文化** |
+| 赛道命题 | 开放的社交图谱、竞争性的信息流算法和社区治理，让文化参与转化为真正的所有权 |
+| AI 配置 | **Kimi K3** |
+| 赛道奖项 | `$30,000` |
+
+RoxMate 将这一命题落到真实的运动社区：用链上成绩构建开放社交图谱，用表现驱动的匹配帮助用户把注意力放在更合拍的人身上，再通过搭档关系和评价沉淀社区信任与协作文化。
+
 ## 为什么是 RoxMate？
 
 HYROX 的成绩不只是一个最终用时。搭档是否合拍，还取决于每个项目的节奏、力量分配和协作体验。RoxMate 将这些信息组织成一张公开但由用户掌控的运动身份卡，让“找搭子”从凭感觉，变成基于真实表现的匹配。
@@ -22,7 +33,7 @@ HYROX 的成绩不只是一个最终用时。搭档是否合拍，还取决于�
 - **发现合拍搭档**：基于城市、组别和可比较的项目表现筛选候选人，并提供匹配分数。
 - **确认真实关系**：搭档邀请、接受和关系状态写入 Monad Testnet，双方共享同一份事实。
 - **留下搭档评价**：完成合作后，对已发布成绩留下 GOOD / BAD 反馈，积累可参考的协作信号。
-- **隐私友好的 AI**：AI 只接收匿名的可比成绩摘要，用于解释匹配原因，不发送钱包、昵称或个人介绍。
+- **Kimi K3 匹配解释**：Kimi K3 只接收匿名的可比成绩摘要，用于解释匹配原因，不发送钱包、昵称或个人介绍。
 
 ## 产品流程
 
@@ -63,14 +74,22 @@ RoxMate 将运动身份、比赛成绩、搭档关系和评价记录在 Monad Te
 | Wallet | viem |
 | Smart contract | Solidity · OpenZeppelin · Foundry |
 | Network | Monad Testnet · Chain ID `10143` |
-| Matching | 浏览器端规则匹配 + 可选 AI 匹配解释 |
+| Matching | 浏览器端规则匹配 + Kimi K3 匹配解释 |
 
 Registry 合约：`0x601c5e9007e52950575b46b84415b152853685d0`
 
-## Hackathon Demo
+## Kimi K3 如何参与匹配
+
+RoxMate 先在浏览器端读取公开的链上候选人，并根据城市、组别和可比较项目计算基础匹配分数；获得用户授权后，再将分数、可比项目数量和规则理由等匿名信号交给 Kimi K3，生成更容易理解的匹配解释。
+
+这样，链上数据负责提供可验证的事实，规则引擎负责保持匹配边界，Kimi K3 负责把结果解释成用户能快速理解的建议。
+
+## Demo & Submission
 
 - **Live Demo**：[roxmate-one.vercel.app](https://roxmate-one.vercel.app/)
 - **Network**：Monad Testnet
+- **Hackathon Track**：社会、注意力和文化
+- **AI Model**：Kimi K3
 - **状态**：MVP / Hackathon prototype
 
 线上 Demo 主要用于展示产品体验；连接钱包和链上写入需要兼容的钱包以及 Monad Testnet 测试币。
