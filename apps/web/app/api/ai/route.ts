@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     const upstream = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, temperature: 0.2, messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model, reasoning_effort: "low", messages: [{ role: "user", content: prompt }] }),
       signal: AbortSignal.timeout(20_000),
       cache: "no-store",
     });
