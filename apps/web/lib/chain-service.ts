@@ -55,6 +55,11 @@ async function getProfile(wallet: string, context: ReadContext): Promise<Profile
   return request;
 }
 
+export async function hasAiConsent(wallet: string): Promise<boolean> {
+  const profile = await getProfile(wallet, readContext());
+  return profile?.ai_consent === true;
+}
+
 async function getResult(id: string, context: ReadContext): Promise<PersonalResult> {
   const key = id.toLowerCase();
   const cached = context.results.get(key);

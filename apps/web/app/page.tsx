@@ -15,15 +15,43 @@ function errorText(error:unknown) {return (error as {code?:number})?.code===4001
 
 async function requestAi(matches:MatchResponse):Promise<MatchResponse> {
   if(!matches.matches.length) return matches;
-  const response=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({candidates:matches.matches.map((match,index)=>({index,score:match.score,comparable:match.comparable,reasons:match.reasons.filter(reason=>!reason.startsWith("同城："))}))})});
-  if(!response.ok) throw new Error("AI 服务暂不可用");
-  const data=await response.json() as {enabled?:boolean;reasons?:Record<string,string>};
-  if(!data.enabled||!data.reasons) return matches;
+  const candidates=matches.matches
+    .map((match,index)=>({match,index}))
+    .filter(({match})=>match.profile.ai_consent===true);
+  if(!candidates.length) return {...matches,notice:`${matches.notice} 候选人未开启 AI 授权，已保留基础匹配。`};
+
+  const response=await fetch("/api/ai",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({candidates:candidates.map(({match,index})=>({
+      wallet:match.profile.wallet,
+      index,
+      score:match.score,
+      comparable:match.comparable,
+      reasons:match.reasons.filter(reason=>!reason.startsWith("同城：")),
+    }))}),
+  });
+  if(!response.ok) return {...matches,notice:`${matches.notice} AI 服务暂不可用，已保留基础匹配。`};
+
+  const data=await response.json() as {enabled?:boolean;code?:string;reasons?:Record<string,string>};
+  if(!data.enabled||!data.reasons) {
+    const fallback=data.code==="no_authorized_candidates"
+      ?"候选人授权状态已变化，已保留基础匹配。"
+      :data.code==="ai_unconfigured"
+        ?"AI 尚未配置，已保留基础匹配。"
+        :"AI 暂不可用，已保留基础匹配。";
+    return {...matches,notice:`${matches.notice} ${fallback}`};
+  }
+
+  const authorizedIndices=new Set(candidates.map(({index})=>String(index)));
+  const aiReasons=Object.fromEntries(Object.entries(data.reasons)
+    .filter(([index,reason])=>authorizedIndices.has(index)&&typeof reason==="string"&&reason.trim()));
+  if(!Object.keys(aiReasons).length) return {...matches,notice:`${matches.notice} AI 未返回可用解释，已保留基础匹配。`};
   return {
     ...matches,
     mode:"AI",
-    notice:`${matches.notice} AI 已根据匿名匹配信号生成解释。`,
-    matches:matches.matches.map((match,index)=>({...match,aiReason:data.reasons?.[String(index)]})),
+    notice:`${matches.notice} 仅为已授权候选人生成 AI 解释；其他候选人保留基础匹配。`,
+    matches:matches.matches.map((match,index)=>({...match,aiReason:aiReasons[String(index)]})),
   };
 }
 
@@ -76,7 +104,7 @@ export default function Home() {
   </main>;
   const transact=async(functionName:string,args:readonly unknown[])=>sendRegistryTransaction(requireProvider(),me.wallet,functionName,args);
   const readWallet=async(functionName:string,args:readonly unknown[])=>{const active= requireProvider();await assertWalletContext(active,me.wallet);return readRegistry(active,functionName,args);};
-  const runMatching=()=>void act(async()=>{setMatching(true);try{const basic=await findMatches(me.wallet);if(!me.profile?.ai_consent){setMatch(basic);return;}try{setMatch(await requestAi(basic));}catch{setMatch(basic);setMessage("AI 暂不可用，已展示链上基础匹配结果。");}}finally{setMatching(false);}});
+  const runMatching=()=>void act(async()=>{setMatching(true);try{const basic=await findMatches(me.wallet);if(!me.profile?.ai_consent){setMatch({...basic,notice:`${basic.notice} 你尚未开启 AI 授权，已保留基础匹配。`});return;}try{setMatch(await requestAi(basic));}catch{setMatch({...basic,notice:`${basic.notice} AI 暂不可用，已保留基础匹配。`});}}finally{setMatching(false);}});
   const respondPartner=(connection:Connection,accept:boolean)=>act(async()=>{const status=Number(await readWallet("getConnection",[connection.requester,me.wallet]));if(status!==1)throw new Error(accept?(status===2?"邀请已经接受，请刷新搭档页面。":status===3?"这条邀请已被拒绝，可重新发起邀请。":"这条邀请已不存在，或邀请方地址不匹配。请刷新搭档页面。"):"这条邀请状态已变化，请刷新搭档页面。");await transact("respondPartner",[connection.requester,accept]);setLinks(current=>current.map(value=>value.id===connection.id?{...value,status:accept?"ACCEPTED":"DECLINED"}:value));if(accept)setMessage("已成为搭档，可以查看并评价彼此成绩。");});
   const invitePartner=(wallet:string)=>act(async()=>{await transact("invitePartner",[wallet]);setMessage("搭档邀请已上链发送。");});
   const submitReview=(value:"GOOD"|"BAD",comment:string)=>act(async()=>{if(!detail)return;await transact("ratePersonalResult",[detail.record.id,value==="GOOD"?1:2,comment]);setDetail(current=>current?{...current,canReview:false,reviews:[...current.reviews,{id:`${detail.record.id}-${me.wallet}`,result_id:detail.record.id,rater:me.wallet,value,comment,display_name:me.profile?.display_name||me.wallet,created_at:new Date().toISOString()}]}:null);setMessage("评价已上链保存，每项成绩只能评价一次。");});
