@@ -33,8 +33,8 @@ flowchart LR
 
 ```dotenv
 APP_ORIGIN=http://localhost:3000
-AI_MATCH_URL=https://api.deepseek.com/chat/completions
-AI_MATCH_MODEL=deepseek-v4-flash
+AI_MATCH_URL=https://api.moonshot.cn/v1/chat/completions
+AI_MATCH_MODEL=kimi-k3
 AI_API_KEY=在本地填写实际密钥
 ```
 
@@ -46,7 +46,7 @@ AI_API_KEY=在本地填写实际密钥
 
 基础规则分由同城 35 分、至少 3 项可比时的相似度最多 55 分、双方在不同项目各有明显优势 10 分组成。该分数用于匹配，不是运动员评级；AI 调整推荐顺序和理由，不改写基础规则分。
 
-协议参考：[DeepSeek 官方接口文档](https://api-docs.deepseek.com/zh-cn/)。
+当前模型配置使用 Moonshot API 的 Kimi K3；请在本地 `.env.local` 中设置有效的 `AI_API_KEY`，不要提交真实密钥。
 
 ## 本地运行
 
@@ -68,11 +68,12 @@ npm run dev
 | --- | --- |
 | 当前接口回归 | 57/57 通过：真实密码学签名、nonce 重放和域名/URI校验、权限、草稿与多场成绩、公开设置、邀请、评价唯一性与统计、退出 |
 | AI 适配器 | 10/10 通过：本地模型桩验证协议、匿名化、授权过滤、非法候选拒绝、限流降级、不同工作量过滤 |
-| DeepSeek 真实调用 | 使用临时合成成绩，成功返回 AI 模式、有效候选与中文理由；详见 JSON 证据 |
 | 浏览器流程 | 在隔离端口 3001 使用临时签名钱包完成身份卡、草稿刷新保留、发布、接受邀请、评价与计数回归 |
 | 手机端 | 375×812 视口检查，页面无横向溢出；已检查成绩与评价布局 |
 | TypeScript | `npm run lint` 通过（该脚本执行 `tsc --noEmit`） |
 | 生产构建 | 通过；在源代码隔离副本执行 `npm run build`，避免干扰运行中的开发服务 |
+
+AI 适配器的 10/10 验证使用本地模型桩，不代表已完成对 Kimi K3 的真实 API 调用验证。
 
 浏览器测试使用能生成真实签名的临时注入 provider，不等同于对 MetaMask 等实际钱包扩展弹窗的人工验收。正式前端不包含该 provider；测试账号、记录、邀请、评价已清理。实际扩展的账户选择、网络切换和签名弹窗仍需在用户自己的钱包浏览器中体验确认。当前接入注入式浏览器钱包，未实现 WalletConnect 扫码连接。
 
