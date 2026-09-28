@@ -67,9 +67,9 @@ RoxMate 将运动身份、比赛成绩、搭档关系和评价记录在 Monad Te
 | Network | Monad Testnet · Chain ID `10143` |
 | Matching | 浏览器端规则匹配 + Kimi K3 匹配解释 |
 
-Registry 合约：`0x601c5e9007e52950575b46b84415b152853685d0`
+Registry 合约：`0x2055a709102e37c11eec274e0f456e6d01ec13b8`
 
-该地址是历史测试网部署，尚不包含仓库当前的邀请方向权限修复。修复版需重新部署并更新 Web 配置；在此之前，新版前端会暂停旧合约上的邀请与评价交易。旧地址上的用户数据不会自动迁移。
+修复版合约已于 2026-09-28 部署到 Monad Testnet。旧地址 `0x601c5e9007e52950575b46b84415b152853685d0` 上的用户数据不会自动迁移，需在新地址重新创建身份卡和成绩。部署详情见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 ## Demo & Submission
 

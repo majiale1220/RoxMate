@@ -2,7 +2,9 @@ import { decodeErrorResult, decodeFunctionResult, encodeAbiParameters, encodeFun
 import type { WalletProvider } from "./wallet";
 import { DIVISIONS, STATIONS, type ResultPayload } from "./personal-types";
 
-export const REGISTRY_ADDRESS = (process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || process.env.REGISTRY_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`;
+// The registry address is public and ships with the web build. The optional
+// override is for a future test deployment; the old Vercel secret is ignored.
+export const REGISTRY_ADDRESS = (process.env.NEXT_PUBLIC_ACTIVE_REGISTRY_ADDRESS || "0x2055a709102e37c11eec274e0f456e6d01ec13b8") as `0x${string}`;
 export const CHAIN_ID = 10143;
 export const RPC_URL = process.env.NEXT_PUBLIC_MONAD_TESTNET_RPC_URL || "https://testnet-rpc.monad.xyz/";
 export const MAX_SCAN_LIMIT = 10;
