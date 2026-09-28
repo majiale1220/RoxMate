@@ -20,4 +20,4 @@ function createConfig(relative, values) {
   console.log(`Created ${relative} (mode 600)`);
 }
 
-createConfig('apps/web/.env.local', { ...settings, NEXT_PUBLIC_REGISTRY_ADDRESS: deployment.address, NEXT_PUBLIC_MONAD_TESTNET_RPC_URL: deployment.rpcUrl, SESSION_SECRET: randomBytes(32).toString('hex') });
+createConfig('apps/web/.env.local', { ...settings, NEXT_PUBLIC_ACTIVE_REGISTRY_ADDRESS: deployment.address, NEXT_PUBLIC_MONAD_TESTNET_RPC_URL: deployment.rpcUrl, SESSION_SECRET: randomBytes(32).toString('hex') });

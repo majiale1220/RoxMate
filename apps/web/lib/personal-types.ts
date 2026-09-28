@@ -14,4 +14,4 @@ export type PersonalResult = { id: string; owner: string; payload: ResultPayload
 export type Review = { id: string; result_id: string; rater: string; value: "GOOD" | "BAD"; comment: string; display_name: string; created_at: string };
 export type Connection = { id: string; requester: string; recipient: string; status: "PENDING" | "ACCEPTED" | "DECLINED"; display_name: string; city: string; wallet: string };
 export type Match = { profile: Profile; score: number; comparable: number; reasons: string[]; aiReason?: string; publishedCount: number; connection: Connection["status"] | null };
-export type MatchResponse = { mode: "AI" | "BASIC"; notice: string; matches: Match[] };
+export type MatchResponse = { mode: "AI" | "BASIC"; notice: string; matches: Match[]; cursor: number; nextCursor: number | null };

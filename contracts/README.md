@@ -19,9 +19,10 @@ forge test
 
 ## Deploy to Monad testnet
 
-Deployed on chain 10143 at `0x601c5e9007e52950575b46b84415b152853685d0`.
+Deployed on chain 10143 at `0x2055a709102e37c11eec274e0f456e6d01ec13b8`.
 The receipt, block and transaction hash are recorded in `deployments/10143.json`.
-Receipt status and a live `getIdentity` call were checked; explorer source verification is not yet performed.
+Receipt status and live `getPendingRequester` and `profileCount` calls were checked; explorer source verification is not yet performed.
+The prior deployment is recorded in `deployments/10143-legacy.json`. Its state does not migrate automatically; users must recreate any required profiles and results.
 The command below creates another deployment; it is not needed to restart the application.
 
 ```bash

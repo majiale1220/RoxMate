@@ -128,6 +128,7 @@ contract RoxMateRegistry is EIP712 {
     mapping(bytes32 resultId => PersonalResult) private _personalResults;
     mapping(address owner => bytes32[]) private _personalResultIds;
     mapping(address member => mapping(address other => ConnectionStatus)) private _connections;
+    mapping(address requester => mapping(address recipient => bool)) private _pendingInvites;
     mapping(address member => address[]) private _connectionList;
     mapping(bytes32 resultId => mapping(address rater => RatingView)) private _personalRatings;
     mapping(bytes32 resultId => mapping(address rater => string)) private _personalComments;
@@ -421,6 +422,7 @@ contract RoxMateRegistry is EIP712 {
         bool isNewConnection = _connections[msg.sender][recipient] == ConnectionStatus.NONE;
         _connections[msg.sender][recipient] = ConnectionStatus.PENDING;
         _connections[recipient][msg.sender] = ConnectionStatus.PENDING;
+        _pendingInvites[msg.sender][recipient] = true;
         if (isNewConnection) {
             _connectionList[msg.sender].push(recipient);
             _connectionList[recipient].push(msg.sender);
@@ -429,7 +431,11 @@ contract RoxMateRegistry is EIP712 {
     }
 
     function respondPartner(address requester, bool accept) external {
-        if (_connections[requester][msg.sender] != ConnectionStatus.PENDING) revert NotInviteRecipient();
+        if (!_pendingInvites[requester][msg.sender] || _connections[requester][msg.sender] != ConnectionStatus.PENDING)
+        {
+            revert NotInviteRecipient();
+        }
+        delete _pendingInvites[requester][msg.sender];
         ConnectionStatus status = accept ? ConnectionStatus.ACCEPTED : ConnectionStatus.DECLINED;
         _connections[requester][msg.sender] = status;
         _connections[msg.sender][requester] = status;
@@ -438,6 +444,12 @@ contract RoxMateRegistry is EIP712 {
 
     function getConnection(address member, address other) external view returns (ConnectionStatus) {
         return _connections[member][other];
+    }
+
+    function getPendingRequester(address member, address other) external view returns (address) {
+        if (_pendingInvites[member][other]) return member;
+        if (_pendingInvites[other][member]) return other;
+        return address(0);
     }
 
     function getConnections(address member, uint256 cursor, uint8 limit)

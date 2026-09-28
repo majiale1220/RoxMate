@@ -166,6 +166,53 @@ contract RoxMateRegistryTest is Test {
         assertEq(next, 1);
     }
 
+    function testOnlyInvitationRecipientCanRespond() public {
+        vm.prank(memberA);
+        registry.updateProfile("Alice", "Shanghai", "", true, false);
+        vm.prank(memberB);
+        registry.updateProfile("Bob", "Shanghai", "", true, false);
+
+        vm.prank(memberA);
+        registry.invitePartner(memberB);
+        assertEq(registry.getPendingRequester(memberA, memberB), memberA);
+
+        vm.prank(memberA);
+        vm.expectRevert(RoxMateRegistry.NotInviteRecipient.selector);
+        registry.respondPartner(memberB, true);
+
+        uint32[8] memory times;
+        times[0] = 138;
+        RoxMateRegistry.PersonalResultInput memory input = RoxMateRegistry.PersonalResultInput({
+            resultId: keccak256("recipient-result"),
+            eventKey: keccak256("event"),
+            eventName: "Race",
+            location: "Shanghai",
+            raceDayStart: uint64(block.timestamp - 1 days),
+            division: 0,
+            totalSec: 0,
+            runPaceSec: 0,
+            scoreMask: 1,
+            timeSec: times,
+            distanceM: [uint32(0), 0, 0, 0, 0, 0, 0, 0],
+            loadKg: [uint16(0), 0, 0, 0, 0, 0, 0, 0],
+            reps: [uint16(0), 0, 0, 0, 0, 0, 0, 0]
+        });
+        vm.prank(memberB);
+        registry.publishPersonalResult(input);
+        vm.prank(memberA);
+        vm.expectRevert(RoxMateRegistry.NotPartner.selector);
+        registry.ratePersonalResult(input.resultId, RoxMateRegistry.Rating.BAD, "unilateral rating");
+
+        vm.prank(memberB);
+        registry.respondPartner(memberA, true);
+        assertEq(registry.getPendingRequester(memberA, memberB), address(0));
+        assertEq(uint256(registry.getConnection(memberA, memberB)), uint256(RoxMateRegistry.ConnectionStatus.ACCEPTED));
+
+        vm.prank(memberA);
+        registry.ratePersonalResult(input.resultId, RoxMateRegistry.Rating.GOOD, "real partner rating");
+        assertEq(registry.getIdentity(memberB).goodCount, 1);
+    }
+
     function testProfileRejectsOversizedInput() public {
         vm.prank(memberA);
         vm.expectRevert(RoxMateRegistry.InputTooLong.selector);
