@@ -4,6 +4,8 @@
 配套文档：[产品说明方案](/Users/mayjlee/Documents/Codex/Monad/RoxMate_产品说明方案.md)。  
 本版覆盖 FR-00–FR-05，范围冻结为钱包签名登录、手动填写双方独立成绩、双方共同确认、链上好评差评和 AI 搭子推荐。
 
+当前运行配置补充（2026-09-28）：Web 的可选 AI 代理使用 Moonshot API 的 Kimi K3（`AI_MATCH_URL=https://api.moonshot.cn/v1/chat/completions`、`AI_MATCH_MODEL=kimi-k3`）；密钥仅通过服务端 `AI_API_KEY` 注入，不进入前端。此运行时配置不修改本版冻结的架构范围；当前 AI 验证记录仅覆盖本地模型桩，未覆盖真实 Kimi API 调用。
+
 ## 1. 目标、角色与系统边界
 
 前端为“钱包登录、身份卡、比赛记录、找搭子”四个页面/状态。钱包登录是所有受保护操作的前置条件；后端处理结构化表单、确认协作和推荐；Monad 记录共同确认及评价；AI 只解释个人成绩比较结果。

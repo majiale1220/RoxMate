@@ -17,6 +17,8 @@
 
 - 不再需要 PostgreSQL；公开业务数据全部从合约读取。
 - Web + 可选 AI Proxy：`http://localhost:3000`，配置文件 `apps/web/.env.local`。
+- AI 模型：Moonshot API / Kimi K3（`AI_MATCH_URL=https://api.moonshot.cn/v1/chat/completions`，`AI_MATCH_MODEL=kimi-k3`）。`AI_API_KEY` 只放在服务端环境变量中，不要提交到仓库。
+- AI 验证范围：当前记录的适配器测试使用本地模型桩，尚未记录 Kimi K3 的真实 API 调用验证。
 - Web 是本次启动的开发进程，不保证电脑重启后自动恢复。
 
 重启 Web：
