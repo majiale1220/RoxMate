@@ -1,5 +1,15 @@
 # RoxMate 本机与 Monad Testnet 部署记录
 
+**当前状态（2026-09-28）**：本文记录的合约地址是旧版部署，尚不包含邀请方向权限修复。合约不能原地升级；新版部署和前端地址切换完成前，前端会暂停旧合约上的邀请与评价交易。旧合约数据不会自动迁移。
+
+## 修复版上线步骤
+
+1. 在 `contracts` 目录运行 `forge test`，再用 `forge script script/Deploy.s.sol:DeployRoxMateRegistry --rpc-url "$MONAD_TESTNET_RPC_URL"` 模拟部署。2026-09-28 的模拟通过，按当时链上费率估算上限约 1.01 MON；实际费用以广播时钱包与 RPC 报价为准。
+2. 确认部署账户和费用后，使用 Foundry 加密账户 `roxmate-deployer` 加 `--broadcast` 部署。记录交易哈希、区块和新地址，并验证新地址的 `getPendingRequester(address,address)` 可读。
+3. 更新 `contracts/deployments/10143.json`、本地 `apps/web/.env.local` 和线上环境中的 `REGISTRY_ADDRESS`、`NEXT_PUBLIC_REGISTRY_ADDRESS`，然后重新构建和发布 Web。不要沿用旧地址；前端会对旧地址暂停搭档写入。
+4. 如需 AI 解释，在服务端配置 `AI_API_KEY`、`AI_MATCH_URL`、`AI_MATCH_MODEL` 和 Redis REST 凭据。Vercel Upstash 集成自动提供 `KV_REST_API_URL`、`KV_REST_API_TOKEN`；直接配置 Upstash 时可用 `UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`。缺少共享限流配置时只提供基础匹配。
+5. 通知旧测试网用户重新创建身份卡和成绩。旧合约状态不会自动复制，新合约上的搭档关系和评价从零开始。
+
 日期：2026-09-04。
 
 ## 链上结果

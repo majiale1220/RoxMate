@@ -2,6 +2,7 @@ import { createPublicClient, defineChain, http } from "viem";
 import { CHAIN_ID, MAX_SCAN_LIMIT, REGISTRY_ADDRESS, RPC_URL, registryAbi } from "./chain";
 import { STATIONS, DIVISIONS, type Profile, type PersonalResult, type Connection, type MatchResponse, type Review, type Score } from "./personal-types";
 import { normalizeWallet } from "./shared";
+import { newestPage, type Page } from "./pagination";
 
 const chain = defineChain({ id: CHAIN_ID, name: "Monad Testnet", nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 }, rpcUrls: { default: { http: [RPC_URL] } } });
 const client = createPublicClient({ chain, transport: http(RPC_URL) });
@@ -19,7 +20,7 @@ type RatingTuple = { value: number | bigint; ratedRevision: bigint; createdAt: b
 
 type ReadContext = {
   profiles: Map<string, Promise<Profile | null>>;
-  resultLists: Map<string, Promise<PersonalResult[]>>;
+  resultLists: Map<string, Promise<Page<PersonalResult>>>;
   results: Map<string, Promise<PersonalResult>>;
 };
 
@@ -101,24 +102,30 @@ async function getResult(id: string, context: ReadContext): Promise<PersonalResu
   return request;
 }
 
-async function getResults(wallet: string, context: ReadContext): Promise<PersonalResult[]> {
+async function getResults(wallet: string, context: ReadContext, before?: number): Promise<Page<PersonalResult>> {
   const key = normalizeWallet(wallet);
-  const cached = context.resultLists.get(key);
+  const cacheKey = `${key}:${before ?? "latest"}`;
+  const cached = context.resultLists.get(cacheKey);
   if (cached) return cached;
 
   const request = (async () => {
-    const [ids] = await read("getPersonalResultIds", [key, 0, MAX_SCAN_LIMIT]) as [`0x${string}`[], bigint];
-    const results = await Promise.all(ids.map((id) => getResult(id, context)));
-    // The contract appends IDs; present the bounded fetched page newest-first.
-    return results.reverse();
+    const ids = await newestPage(async (cursor, limit) => {
+      const [page] = await read("getPersonalResultIds", [key, cursor, limit]) as [`0x${string}`[], bigint];
+      return page;
+    }, before);
+    return { ...ids, items: await Promise.all(ids.items.map((id) => getResult(id, context))) };
   })();
-  context.resultLists.set(key, request);
+  context.resultLists.set(cacheKey, request);
   return request;
+}
+
+export async function olderResults(wallet: string, before: number): Promise<Page<PersonalResult>> {
+  return getResults(wallet, readContext(), before);
 }
 
 export async function myIdentity(wallet: string) {
   const context = readContext();
-  const [profile, records, identityResult] = await Promise.all([
+  const [profile, results, identityResult] = await Promise.all([
     getProfile(wallet, context),
     getResults(wallet, context),
     read("getIdentity", [wallet]),
@@ -127,8 +134,9 @@ export async function myIdentity(wallet: string) {
   return {
     wallet: normalizeWallet(wallet),
     profile,
-    records,
-    stats: { published: records.length, drafts: 0, good: toNumber(identity.goodCount), bad: toNumber(identity.badCount) },
+    records: results.items,
+    olderResultsCursor: results.olderCursor,
+    stats: { published: results.total, drafts: 0, good: toNumber(identity.goodCount), bad: toNumber(identity.badCount) },
   };
 }
 
@@ -136,34 +144,47 @@ export async function athlete(viewer: string, target: string) {
   const context = readContext();
   const profile = await getProfile(target, context);
   if (!profile) throw new Error("身份卡不存在");
-  const [statusResult, records] = await Promise.all([
+  const [statusResult, results] = await Promise.all([
     read("getConnection", [viewer, target]),
     getResults(target, context),
   ]);
   const status = toNumber(statusResult);
   const isPartner = status === 2;
-  if (normalizeWallet(viewer) !== normalizeWallet(target) && !profile.discoverable && !isPartner) throw new Error("该身份卡未公开");
-  return { profile, records, isPartner };
+  if (normalizeWallet(viewer) !== normalizeWallet(target) && !profile.discoverable && !isPartner) throw new Error("该用户未开启应用内展示；链上数据仍公开");
+  return { profile, records: results.items, olderResultsCursor: results.olderCursor, publishedCount: results.total, isPartner };
 }
 
-export async function connections(wallet: string): Promise<Connection[]> {
+export async function connections(wallet: string, before?: number): Promise<Page<Connection>> {
   const context = readContext();
-  const [others, statuses] = await read("getConnections", [wallet, 0, MAX_SCAN_LIMIT]) as [string[], number[]];
-  return Promise.all(others.map(async (other, index) => {
+  const page = await newestPage(async (cursor, limit) => {
+    const [others, statuses] = await read("getConnections", [wallet, cursor, limit]) as [string[], number[], bigint];
+    return others.map((other, index) => ({ other, status: toNumber(statuses[index]) }));
+  }, before);
+  const items = await Promise.all(page.items.map(async ({ other, status: statusNumber }) => {
     const profile = await getProfile(other, context);
-    const status = ["NONE", "PENDING", "ACCEPTED", "DECLINED"][toNumber(statuses[index])] as Connection["status"];
+    const status = ["NONE", "PENDING", "ACCEPTED", "DECLINED"][statusNumber] as Connection["status"];
+    let requester = wallet;
+    if (status === "PENDING") {
+      try {
+        requester = await read("getPendingRequester", [wallet, other]) as string;
+      } catch {
+        throw new Error("当前合约尚未部署搭档权限修复版，无法安全显示邀请方向。");
+      }
+      if (normalizeWallet(requester) !== normalizeWallet(wallet) && normalizeWallet(requester) !== normalizeWallet(other)) {
+        throw new Error("链上邀请方向不正确，请刷新后重试。");
+      }
+    }
     return {
       id: `${normalizeWallet(wallet)}-${normalizeWallet(other)}`,
-      // The current contract stores PENDING symmetrically. Keep the existing
-      // conservative presentation until a directional getter is deployed.
-      requester: status === "PENDING" ? other : wallet,
-      recipient: status === "PENDING" ? wallet : other,
+      requester,
+      recipient: status === "PENDING" && normalizeWallet(requester) === normalizeWallet(wallet) ? other : wallet,
       status,
       display_name: profile?.display_name || other.slice(0, 8),
       city: profile?.city || "",
       wallet: normalizeWallet(other),
     };
   }));
+  return { ...page, items };
 }
 
 export async function resultDetail(viewer: string, id: string) {
@@ -172,16 +193,30 @@ export async function resultDetail(viewer: string, id: string) {
   const owner = record.owner;
   const profile = await getProfile(owner, context);
   if (!profile) throw new Error("身份卡不存在");
-  const [statusResult, ratersResult] = await Promise.all([
+  const [statusResult, viewerRating] = await Promise.all([
     read("getConnection", [viewer, owner]),
-    read("getPersonalRaters", [id, 0, MAX_SCAN_LIMIT]),
+    read("getPersonalRating", [id, viewer]) as Promise<RatingTuple>,
   ]);
   const status = toNumber(statusResult);
   const isPartner = status === 2;
-  if (normalizeWallet(viewer) !== owner && !profile.discoverable && !isPartner) throw new Error("无权查看这项成绩");
+  if (normalizeWallet(viewer) !== owner && !profile.discoverable && !isPartner) throw new Error("该用户未开启应用内成绩展示；链上数据仍公开");
 
-  const [raters] = ratersResult as [string[], bigint];
-  const reviews: Review[] = await Promise.all(raters.map(async (rater) => {
+  const reviews = await reviewPage(id, context);
+  return {
+    record,
+    reviews: reviews.items,
+    reviewCount: reviews.total,
+    olderReviewsCursor: reviews.olderCursor,
+    canReview: normalizeWallet(viewer) !== owner && isPartner && toNumber(viewerRating.value) === 0,
+  };
+}
+
+async function reviewPage(id: string, context: ReadContext, before?: number): Promise<Page<Review>> {
+  const raters = await newestPage(async (cursor, limit) => {
+    const [page] = await read("getPersonalRaters", [id, cursor, limit]) as [string[], bigint];
+    return page;
+  }, before);
+  const items: Review[] = await Promise.all(raters.items.map(async (rater) => {
     const [rating, comment, raterProfile] = await Promise.all([
       read("getPersonalRating", [id, rater]) as Promise<RatingTuple>,
       read("getPersonalRatingComment", [id, rater]) as Promise<string>,
@@ -197,32 +232,41 @@ export async function resultDetail(viewer: string, id: string) {
       created_at: new Date(toNumber(rating.createdAt) * 1000).toISOString(),
     };
   }));
-  return { record, reviews, canReview: normalizeWallet(viewer) !== owner && isPartner && !reviews.some((review) => review.rater === normalizeWallet(viewer)) };
+  return { ...raters, items };
 }
 
-export async function matches(wallet: string): Promise<MatchResponse> {
+export async function olderReviews(id: string, before: number): Promise<Page<Review>> {
+  return reviewPage(id, readContext(), before);
+}
+
+export async function matches(wallet: string, before?: number): Promise<MatchResponse> {
   const context = readContext();
   const me = await getProfile(wallet, context);
   if (!me) throw new Error("请先创建身份卡");
-  const [members, mine] = await Promise.all([
-    read("getDiscoverableProfiles", [0, MAX_SCAN_LIMIT]) as Promise<[string[], bigint]>,
+  const [countResult, mine] = await Promise.all([
+    read("profileCount"),
     getResults(wallet, context),
   ]);
-  const [memberAddresses] = members;
+  const count = toNumber(countResult);
+  const end = before === undefined ? count : Math.min(Math.max(0, before), count);
+  const start = Math.max(0, end - MAX_SCAN_LIMIT);
+  const [memberAddresses] = end > start
+    ? await read("getDiscoverableProfiles", [start, end - start]) as [string[], bigint]
+    : [[], BigInt(0)];
   const candidates = await Promise.all(memberAddresses
     .filter((address) => normalizeWallet(address) !== normalizeWallet(wallet))
     .map(async (address) => {
       const profile = await getProfile(address, context);
       if (!profile || profile.city.toLowerCase() !== me.city.toLowerCase()) return null;
-      return { profile, records: await getResults(address, context) };
+      return { profile, results: await getResults(address, context) };
     }));
 
-  const found = (candidates.filter(Boolean) as { profile: Profile; records: PersonalResult[] }[])
-    .map(({ profile, records }) => {
+  const found = (candidates.filter(Boolean) as { profile: Profile; results: Page<PersonalResult> }[])
+    .map(({ profile, results }) => {
       const pairs: number[] = [];
       for (const station of STATIONS) {
-        for (const mineResult of mine.slice(0, 5)) {
-          for (const candidateResult of records.slice(0, 5)) {
+        for (const mineResult of mine.items.slice(0, 5)) {
+          for (const candidateResult of results.items.slice(0, 5)) {
             if (mineResult.payload.division !== candidateResult.payload.division) continue;
             const left = mineResult.payload.scores.find((score) => score.key === station.key);
             const right = candidateResult.payload.scores.find((score) => score.key === station.key);
@@ -239,12 +283,18 @@ export async function matches(wallet: string): Promise<MatchResponse> {
         score: Math.round(35 + (pairs.length >= 3 ? 55 * similar : 0)),
         comparable: pairs.length,
         reasons: [`同城：${me.city}`, pairs.length >= 3 ? `有 ${pairs.length} 项相同组别、工作量的成绩可比` : "可比项目不足 3 项"],
-        publishedCount: records.length,
+        publishedCount: results.total,
         connection: null,
       };
     })
     .sort((left, right) => right.score - left.score)
     .slice(0, MAX_SCAN_LIMIT);
 
-  return { mode: "BASIC", notice: `链上基础匹配：本次最多读取 ${MAX_SCAN_LIMIT} 位候选人，每位最多读取最近 5 场成绩。`, matches: found };
+  return {
+    mode: "BASIC",
+    notice: `链上基础匹配：每批最多读取 ${MAX_SCAN_LIMIT} 个身份位置，每位最多比较最近 5 场成绩。`,
+    matches: found,
+    cursor: end,
+    nextCursor: start > 0 ? start : null,
+  };
 }

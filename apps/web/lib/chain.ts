@@ -12,12 +12,14 @@ const divisionIndex = new Map(DIVISIONS.map((division,index) => [division,index]
 
 export const registryAbi = [
   {type:"function",name:"getProfile",stateMutability:"view",inputs:[{name:"member",type:"address"}],outputs:[{name:"",type:"tuple",components:[{name:"displayName",type:"string"},{name:"city",type:"string"},{name:"bio",type:"string"},{name:"discoverable",type:"bool"},{name:"aiConsent",type:"bool"},{name:"revision",type:"uint64"},{name:"exists",type:"bool"}]}]},
+  {type:"function",name:"profileCount",stateMutability:"view",inputs:[],outputs:[{name:"",type:"uint256"}]},
   {type:"function",name:"getPersonalResultIds",stateMutability:"view",inputs:[{name:"owner",type:"address"},{name:"cursor",type:"uint256"},{name:"limit",type:"uint8"}],outputs:[{name:"ids",type:"bytes32[]"},{name:"nextCursor",type:"uint256"}]},
   {type:"function",name:"getPersonalResult",stateMutability:"view",inputs:[{name:"resultId",type:"bytes32"}],outputs:[{name:"",type:"tuple",components:[{name:"resultId",type:"bytes32"},{name:"owner",type:"address"},{name:"eventKey",type:"bytes32"},{name:"eventName",type:"string"},{name:"location",type:"string"},{name:"raceDayStart",type:"uint64"},{name:"division",type:"uint8"},{name:"totalSec",type:"uint32"},{name:"runPaceSec",type:"uint32"},{name:"scoreMask",type:"uint8"},{name:"timeSec",type:"uint32[8]"},{name:"distanceM",type:"uint32[8]"},{name:"loadKg",type:"uint16[8]"},{name:"reps",type:"uint16[8]"},{name:"revision",type:"uint64"},{name:"published",type:"bool"}]}]},
   {type:"function",name:"getIdentity",stateMutability:"view",inputs:[{name:"member",type:"address"}],outputs:[{name:"",type:"tuple",components:[{name:"latestResultId",type:"bytes32"},{name:"confirmedRaceCount",type:"uint64"},{name:"goodCount",type:"uint64"},{name:"badCount",type:"uint64"},{name:"distinctRaters",type:"uint64"}]}]},
   {type:"function",name:"getDiscoverableProfiles",stateMutability:"view",inputs:[{name:"cursor",type:"uint256"},{name:"limit",type:"uint8"}],outputs:[{name:"members",type:"address[]"},{name:"nextCursor",type:"uint256"}]},
   {type:"function",name:"getConnections",stateMutability:"view",inputs:[{name:"member",type:"address"},{name:"cursor",type:"uint256"},{name:"limit",type:"uint8"}],outputs:[{name:"others",type:"address[]"},{name:"statuses",type:"uint8[]"},{name:"nextCursor",type:"uint256"}]},
   {type:"function",name:"getConnection",stateMutability:"view",inputs:[{name:"member",type:"address"},{name:"other",type:"address"}],outputs:[{name:"",type:"uint8"}]},
+  {type:"function",name:"getPendingRequester",stateMutability:"view",inputs:[{name:"member",type:"address"},{name:"other",type:"address"}],outputs:[{name:"",type:"address"}]},
   {type:"function",name:"getPersonalRaters",stateMutability:"view",inputs:[{name:"resultId",type:"bytes32"},{name:"cursor",type:"uint256"},{name:"limit",type:"uint8"}],outputs:[{name:"raters",type:"address[]"},{name:"nextCursor",type:"uint256"}]},
   {type:"function",name:"getPersonalRating",stateMutability:"view",inputs:[{name:"resultId",type:"bytes32"},{name:"rater",type:"address"}],outputs:[{name:"",type:"tuple",components:[{name:"value",type:"uint8"},{name:"ratedRevision",type:"uint64"},{name:"createdAt",type:"uint64"}]}]},
   {type:"function",name:"getPersonalRatingComment",stateMutability:"view",inputs:[{name:"resultId",type:"bytes32"},{name:"rater",type:"address"}],outputs:[{name:"",type:"string"}]},
@@ -121,6 +123,13 @@ export async function assertWalletContext(provider:WalletProvider, account:strin
 
 export async function sendRegistryTransaction(provider:WalletProvider, account:string, functionName:string, args:readonly unknown[]) {
   await assertWalletContext(provider,account);
+  if (["invitePartner", "respondPartner", "ratePersonalResult"].includes(functionName)) {
+    try {
+      await readRegistry(provider,"getPendingRequester",[account,account]);
+    } catch {
+      throw new Error("当前合约尚未部署搭档权限修复版，已暂停邀请和评价交易。");
+    }
+  }
   const data = encodeFunctionData({abi:registryAbi,functionName:functionName as never,args:args as never});
   const transaction={from:account,to:REGISTRY_ADDRESS,data};
   try {

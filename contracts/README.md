@@ -20,6 +20,10 @@ forge test
 ## Deploy to Monad testnet
 
 Deployed on chain 10143 at `0x601c5e9007e52950575b46b84415b152853685d0`.
+This historical deployment does not contain the invitation-direction fix in the current source.
+It cannot be upgraded in place. Deploy the revised contract, update the web registry address,
+and have users recreate any required profiles and results; old state does not migrate automatically.
+The web client blocks partner invitations and ratings against the old deployment.
 The receipt, block and transaction hash are recorded in `deployments/10143.json`.
 Receipt status and a live `getIdentity` call were checked; explorer source verification is not yet performed.
 The command below creates another deployment; it is not needed to restart the application.

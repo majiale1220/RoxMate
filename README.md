@@ -69,6 +69,8 @@ RoxMate 将运动身份、比赛成绩、搭档关系和评价记录在 Monad Te
 
 Registry 合约：`0x601c5e9007e52950575b46b84415b152853685d0`
 
+该地址是历史测试网部署，尚不包含仓库当前的邀请方向权限修复。修复版需重新部署并更新 Web 配置；在此之前，新版前端会暂停旧合约上的邀请与评价交易。旧地址上的用户数据不会自动迁移。
+
 ## Demo & Submission
 
 - **Live Demo**：[roxmate-one.vercel.app](https://roxmate-one.vercel.app/)
