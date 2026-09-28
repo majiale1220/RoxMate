@@ -1,6 +1,6 @@
 # RoxMate 本机与 Monad Testnet 部署记录
 
-**当前状态（2026-09-28）**：邀请方向修复版合约已部署到 Monad Testnet，代码分支 `codex/roxmate-five-fixes` 的 Vercel Preview 构建通过。生产网页待合并发布。旧合约不能原地升级，旧数据不会自动迁移。
+**当前状态（2026-09-28）**：邀请方向修复版合约已部署到 Monad Testnet，PR #1 已合并；[生产网页](https://roxmate-one.vercel.app/)已发布。旧合约不能原地升级，旧数据不会自动迁移。
 
 ## 修复版上线记录
 
@@ -9,7 +9,7 @@
 3. `contracts/deployments/10143.json` 已更新到新地址；旧部署记录保存在 `contracts/deployments/10143-legacy.json`。本地 `.env.local` 地址已更新，其他私密配置保留。
 4. 新地址是公开常量，已写入 `apps/web/lib/chain.ts`。Vercel 的旧 `NEXT_PUBLIC_REGISTRY_ADDRESS` 是不可编辑的 Secret，新代码不再读取它；生产发布无需新增合约地址变量。
 5. Vercel 已连接免费 Upstash Redis 到 RoxMate 的 Production 和 Preview，并自动提供 `KV_REST_API_URL`、`KV_REST_API_TOKEN`。既有 `AI_API_KEY`、`AI_MATCH_URL`、`AI_MATCH_MODEL` 保留在服务端。缺少共享限流配置时只提供基础匹配。
-6. 合并 PR 并核对生产网页后，旧测试网用户需在新合约重新创建身份卡和成绩；搭档关系与评价从零开始。
+6. PR #1 合并后，Vercel Production 部署成功，页面包含新合约地址。旧测试网用户需在新合约重新创建身份卡和成绩；搭档关系与评价从零开始。
 
 日期：2026-09-04。
 
@@ -48,4 +48,5 @@ npm run dev
 - 前端/API 类型检查通过。
 - 本地页面返回 HTTP 200。
 - 已验证身份、成绩、搭档和评价合约接口的 Foundry 测试；前端链上交易适配器已接入。
-- 新版本部署交易及接口见上文；生产网页验证待完成。
+- GitHub `main` 合并提交 `ae8d13f0ac2df8df6658168c118f61e8f4fa0073` 已由 Vercel 部署到生产环境。生产网页实际下发的 JS 包含新地址、不包含旧地址；无效 `/api/ai` 请求返回 HTTP 400。
+- AI 模型真实请求和双钱包端到端搭档确认尚未在新合约验证；需有用户在新合约创建身份卡后才能进行。
