@@ -1,7 +1,9 @@
-# RoxMate 技术实现方案
+# RoxMate 技术实现方案（历史设计稿）
 
-版本：v0.2｜日期：2026-09-03｜状态：范围冻结；前端、后端与合约 MVP 已实现，合约已完成本地测试，尚未部署测试网或审计。  
-配套文档：[产品说明方案](/Users/mayjlee/Documents/Codex/Monad/RoxMate_产品说明方案.md)。  
+> 本文记录 2026-09-03 的架构方案，不代表当前代码结构或部署状态。文中的 PostgreSQL、Worker、SIWE 登录会话、双人共同确认同一份成绩等没有按此方案进入当前线上 MVP。当前应用从合约读取公开数据，钱包直接提交交易；AI 解释使用可选的服务端路由和 Redis 限流。详见[当前操作指南](PERSONAL_WORKFLOW.md)、[Web 配置](apps/web/README.md)和[部署记录](DEPLOYMENT.md)。
+
+版本：v0.2｜日期：2026-09-03｜状态：历史设计稿，以下目录、接口与验收描述未整体实现。
+配套文档：[产品说明方案](RoxMate_产品说明方案.md)。
 本版覆盖 FR-00–FR-05，范围冻结为钱包签名登录、手动填写双方独立成绩、双方共同确认、链上好评差评和 AI 搭子推荐。
 
 当前运行配置补充（2026-09-28）：Web 的可选 AI 代理使用 Moonshot API 的 Kimi K3（`AI_MATCH_URL=https://api.moonshot.cn/v1/chat/completions`、`AI_MATCH_MODEL=kimi-k3`）；密钥仅通过服务端 `AI_API_KEY` 注入，不进入前端。此运行时配置不修改本版冻结的架构范围；当前 AI 验证记录仅覆盖本地模型桩，未覆盖真实 Kimi API 调用。
@@ -135,7 +137,7 @@ resultId = keccak256(abi.encode(chainId, registryAddress, eventKey, 较小钱包
 
 ### 5.1 接口草案
 
-以下接口已按本方案实现于 `contracts/src/RoxMateRegistry.sol`；合约已完成本地测试，尚未完成测试网部署和安全审计。
+以下是早期接口草案。当前合约保留部分兼容接口，并增加个人成绩、身份卡与搭档邀请接口；测试网部署状态见[部署记录](DEPLOYMENT.md)。本仓库没有记录安全审计结果。
 
 ```solidity
 struct ResultAttestation {
@@ -410,9 +412,9 @@ C 只有双方各至少一个相对更快站点时才大于 0；若一方全部�
 | D10–D12 | 个人数据比较、AI 解释、降级与隐私控制 | 成绩和授权可用 |
 | D13–D15 | 边界回归、测试网演示、部署与使用说明 | 全链路联调 |
 
-以上是本次实现顺序，不包含未列出的功能。
+以上是原计划的实施顺序，不代表当前仓库的完成情况。
 
-工程目录固定为：apps/web（页面/API）、apps/worker（链上同步）、packages/domain（Schema/规则）、packages/chain（ABI/typed data）、contracts（RoxMateRegistry/测试）。本次已创建前端、后端、Worker 和合约代码；尚未部署测试网或发送消息给任何搭档。
+原计划目录为 apps/web（页面/API）、apps/worker（链上同步）、packages/domain（Schema/规则）、packages/chain（ABI/typed data）、contracts（RoxMateRegistry/测试）。当前仓库主要使用 apps/web 和 contracts；并未按此目录建设 Worker、数据库与会话服务。
 
 交付必须包含三页 Web、合约源码与验证信息、数据库迁移、测试、环境变量样例、部署说明、显著标识的模拟成绩及演示视频。官方成绩核验、合约升级、评价撤销和真人去重不在本项目内。
 
@@ -429,4 +431,4 @@ C 只有双方各至少一个相对更快站点时才大于 0；若一方全部�
 
 与产品方案共用：FR-00–FR-05、AC-00–AC-15；DRAFT / AWAITING_CONFIRMATION / DECLINED / CONFIRMED；PREPARED / SUBMITTED / CONFIRMED / FAILED；GOOD / BAD / NONE；PERFORMANCE_MATCH / SCHEDULE_ONLY。
 
-最终结论：本项目只实现“钱包签名登录并确认身份→手动录入两人个人成绩→双方共同确认上链→身份卡更新→GOOD/BAD 互评→AI 推荐搭子”闭环。任何未在 FR-00–FR-05、API 表和验收用例中列出的能力均不属于本项目；本地测试通过不等于测试网部署或合约安全审计完成。
+原方案设想的闭环为“钱包签名登录并确认身份→手动录入两人个人成绩→双方共同确认上链→身份卡更新→GOOD/BAD 互评→AI 推荐搭子”。当前线上功能及其验证边界请以[操作指南](PERSONAL_WORKFLOW.md)和[部署记录](DEPLOYMENT.md)为准。

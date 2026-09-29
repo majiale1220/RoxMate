@@ -13,7 +13,7 @@ is a user transaction; the submitting wallet confirms it and pays gas.
 ## Local tests
 
 ```bash
-cd /Users/mayjlee/Documents/Codex/Monad/contracts
+cd contracts
 forge test
 ```
 
@@ -34,4 +34,4 @@ forge script script/Deploy.s.sol:DeployRoxMateRegistry \
   --broadcast
 ```
 
-Use the encrypted Foundry account store and enter its password locally when prompted. The web app and worker do not need a deployer private key.
+Use an encrypted Foundry account that you control and enter its password locally when prompted. The web app does not need a deployer private key.
